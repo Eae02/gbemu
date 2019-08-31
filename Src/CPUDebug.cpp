@@ -245,6 +245,8 @@ void InitInstructionDebug()
 	
 	InitInstruction(0xCB, "", PrintExtraCB);
 	
+	InitInstruction(0xE6, "A <- A & ", PrintExtraImm8);
+	
 	//ld reg <- reg
 	for (auto r1 : regs8)
 	{

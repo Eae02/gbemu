@@ -80,20 +80,21 @@ void CPUThreadTarget()
 		uint8_t tac = ioReg[IOREG_TAC];
 		if (tac & 4)
 		{
-			if (timerOverflow)
+			for (int i = 0; i < cycles; i++)
 			{
-				ioReg[IOREG_IF] |= 1 << INT_TIMER;
-				ioReg[IOREG_TIMA] = ioReg[IOREG_TMA];
-				timerOverflow = false;
-			}
-			
-			cyclesSinceTimerInc += cycles;
-			uint32_t cyclesPerTimerInc = CYCLES_PER_TIMER_INC[tac & 3];
-			while (cyclesSinceTimerInc >= cyclesPerTimerInc)
-			{
-				cyclesSinceTimerInc -= cyclesPerTimerInc;
-				if (ioReg[IOREG_TIMA]++ == 0xFF)
-					timerOverflow = true;
+				if (timerOverflow)
+				{
+					ioReg[IOREG_IF] |= 1 << INT_TIMER;
+					ioReg[IOREG_TIMA] = ioReg[IOREG_TMA];
+					timerOverflow = false;
+				}
+				
+				if (++cyclesSinceTimerInc >= CYCLES_PER_TIMER_INC[tac & 3])
+				{
+					if (ioReg[IOREG_TIMA]++ == 0xFF)
+						timerOverflow = true;
+					cyclesSinceTimerInc = 0;
+				}
 			}
 		}
 		
