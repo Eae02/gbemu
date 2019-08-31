@@ -61,6 +61,7 @@ namespace mem
 	}
 	
 	std::string gameName;
+	static bool canSave = false;
 	
 	bool Init(std::istream& cartridgeStream)
 	{
@@ -81,15 +82,28 @@ namespace mem
 		case 0x00:
 		case 0x01:
 		case 0x02:
-		case 0x03:
 			activeMBC = MBC::MBC1;
+			break;
+		case 0x03:
+			canSave = true;
+			activeMBC = MBC::MBC1;
+			break;
+		case 0x05:
+			activeMBC = MBC::MBC2;
+			break;
+		case 0x06:
+			canSave = true;
+			activeMBC = MBC::MBC2;
 			break;
 		case 0x19:
 		case 0x1A:
-		case 0x1B:
 		case 0x1C:
 		case 0x1D:
+			activeMBC = MBC::MBC5;
+			break;
+		case 0x1B:
 		case 0x1E:
+			canSave = true;
 			activeMBC = MBC::MBC5;
 			break;
 		default:
@@ -232,7 +246,7 @@ namespace mem
 			break;
 			
 		case 0x2000 ... 0x2FFF:
-			if (activeMBC == MBC::MBC1)
+			if (activeMBC == MBC::MBC1 || activeMBC == MBC::MBC2)
 				currentRomBank = (currentRomBank & ~0x1FU) | (val & 0x1FU);
 			else if (activeMBC == MBC::MBC5)
 				currentRomBank = (currentRomBank & ~0xFFU) | val;
@@ -240,7 +254,7 @@ namespace mem
 			break;
 		
 		case 0x3000 ... 0x3FFF:
-			if (activeMBC == MBC::MBC1)
+			if (activeMBC == MBC::MBC1 || activeMBC == MBC::MBC2)
 				currentRomBank = (currentRomBank & ~0x1FU) | (val & 0x1FU);
 			else if (activeMBC == MBC::MBC5)
 				currentRomBank = (currentRomBank & ~(uint32_t)(1 << 8)) | (((uint32_t)val & 1) << 8);
@@ -250,7 +264,7 @@ namespace mem
 		case 0x4000 ... 0x5FFF:
 			if (activeMBC == MBC::MBC5 || bankMode == BankMode::RAM)
 			{
-				extRamBankStart = extRam + (1024 * 8) * (size_t)val;
+				extRamBankStart = extRam + (1024 * 8) * (size_t)std::max((int)val, 1);
 			}
 			else if (bankMode == BankMode::ROM)
 			{
@@ -408,6 +422,9 @@ namespace mem
 	
 	void LoadRAM(const std::string& path)
 	{
+		if (!canSave)
+			return;
+		
 		std::ifstream stream(path, std::ios::binary);
 		if (!stream)
 			return;
@@ -455,6 +472,9 @@ namespace mem
 	
 	void SaveRAM(const std::string& path)
 	{
+		if (!canSave)
+			return;
+		
 		z_stream deflateStream = { };
 		deflateStream.avail_in = sizeof(extRam);
 		deflateStream.next_in = extRam;

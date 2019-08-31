@@ -87,6 +87,7 @@ namespace mem
 	enum class MBC
 	{
 		MBC1,
+		MBC2,
 		MBC5
 	};
 	
