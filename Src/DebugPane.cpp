@@ -92,7 +92,7 @@ void DebugPane::Draw(SDL_Renderer* renderer)
 	
 	const uint32_t buttonMask = GetButtonMask();
 	
-	const uint32_t mbcNames[] = { 1, 5 };
+	const uint32_t mbcNames[] = { 1, 2, 5 };
 	
 	const uint32_t regValues[] =
 	{

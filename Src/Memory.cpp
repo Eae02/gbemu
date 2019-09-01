@@ -37,7 +37,8 @@ namespace mem
 	uint8_t backPaletteMemory[64];
 	uint8_t spritePaletteMemory[64];
 	
-	static uint8_t ioRegReadMask[128];
+	static uint8_t ioRegReadAnd[128];
+	static uint8_t ioRegReadOr[128];
 	
 	static uint8_t hram[127];
 	
@@ -47,10 +48,10 @@ namespace mem
 		RAM
 	};
 	
-	MBC activeMBC;
-	
 	static BankMode bankMode;
 	static uint32_t currentRomBank;
+	
+	MBC activeMBC;
 	
 	void UpdateCurrentRomBank()
 	{
@@ -122,7 +123,7 @@ namespace mem
 			}
 		}
 		gameName = std::string(titleBegin, titleLen);
-		for (int i = 0; i < gameName.size(); i++)
+		for (size_t i = 0; i < gameName.size(); i++)
 		{
 			if (i != 0 && gameName[i - 1] != ' ')
 				gameName[i] = std::tolower(gameName[i]);
@@ -138,7 +139,33 @@ namespace mem
 		vramBankStart = vram[0];
 		wramBankStart = wram + 4 * 1024;
 		
-		memset(ioRegReadMask, 0xFF, sizeof(ioRegReadMask));
+		std::fill_n(ioRegReadAnd, std::size(ioReg), 0xFF);
+		std::fill_n(ioRegReadOr, std::size(ioReg), 0);
+		
+		ioRegReadOr[IOREG_NR10] = 0x80;
+		ioRegReadOr[IOREG_NR11] = 0x3F;
+		ioRegReadOr[IOREG_NR13] = 0xFF;
+		ioRegReadOr[IOREG_NR14] = 0xBF;
+		ioRegReadOr[0x15]       = 0xFF;
+		ioRegReadOr[IOREG_NR21] = 0x3F;
+		ioRegReadOr[IOREG_NR23] = 0xFF;
+		ioRegReadOr[IOREG_NR24] = 0xBF;
+		ioRegReadOr[IOREG_NR30] = 0x7F;
+		ioRegReadOr[IOREG_NR31] = 0xFF;
+		ioRegReadOr[IOREG_NR32] = 0x9F;
+		ioRegReadOr[IOREG_NR33] = 0xFF;
+		ioRegReadOr[IOREG_NR34] = 0xBF;
+		ioRegReadOr[0x1F]       = 0xFF;
+		ioRegReadOr[IOREG_NR41] = 0xFF;
+		ioRegReadOr[IOREG_NR44] = 0xBF;
+		ioRegReadOr[IOREG_NR52] = 0x70;
+		for (int i = IOREG_NR52 + 1; i < 0x30; i++)
+			ioRegReadOr[i] = 0xFF;
+		//.byte $80,$3F,$00,$FF,$BF ; NR10-NR15
+		//.byte $FF,$3F,$00,$FF,$BF ; NR20-NR25
+		//.byte $7F,$FF,$9F,$FF,$BF ; NR30-NR35
+		//.byte $FF,$FF,$00,$00,$BF ; NR40-NR45
+		//.byte $00,$00,$70         ; NR50-NR52
 		
 		memset(ioReg, 0, sizeof(ioReg));
 		ioReg[IOREG_NR10] = 0x80;
@@ -193,46 +220,54 @@ namespace mem
 	
 	uint8_t Read(uint16_t address)
 	{
-		switch (address)
+		if (address >= 0xFF00 && address <= 0xFF7F)
 		{
-		case 0xFF00 | IOREG_JOYP:
-		{
-			uint8_t val = ioReg[IOREG_JOYP] & 0x30;
-			if (val & (1 << 5))
-				val |= GetButtonMask() & 0xF;
-			else if (val & (1 << 4))
-				val |= (GetButtonMask() >> 4) & 0xF;
-			return val;
-		}
-		
-		case 0xFF00 | IOREG_KEY1:
-			return ioReg[IOREG_KEY1] | (cpu.doubleSpeed << 7);
-		
-		case 0xFF00 | IOREG_LY:
-		{
-			std::lock_guard<std::mutex> lock(gpu::regMutex);
-			return gpu::reg.ly;
-		}
-		
-		case 0xFF00 | IOREG_STAT:
-			return gpu::GetRegisterSTAT();
-		
-		case 0xFF00 | IOREG_BGPD:
-			return backPaletteMemory[ioReg[IOREG_BGPI] & 0x3F];
-			break;
-		case 0xFF00 | IOREG_OBPD:
-			return spritePaletteMemory[ioReg[IOREG_OBPI] & 0x3F];
-			break;
-		
-		case 0xFFFF:
-			return cpu.intEnableReg;
-		default:
-			if (uint8_t* ptr = ResolveAddress(address))
+			uint32_t reg = address - 0xFF00;
+			switch (reg)
 			{
-				return *ptr;
+			case IOREG_JOYP:
+			{
+				uint8_t val = ioReg[IOREG_JOYP] & 0x30;
+				if (val & (1 << 5))
+					val |= GetButtonMask() & 0xF;
+				else if (val & (1 << 4))
+					val |= (GetButtonMask() >> 4) & 0xF;
+				return val;
 			}
-			return 0;
+			
+			case IOREG_KEY1:
+				return ioReg[IOREG_KEY1] | (cpu.doubleSpeed << 7);
+			
+			case IOREG_LY:
+			{
+				std::lock_guard<std::mutex> lock(gpu::regMutex);
+				return gpu::reg.ly;
+			}
+			
+			case IOREG_STAT:
+				return gpu::GetRegisterSTAT();
+			
+			case IOREG_BGPD:
+				return backPaletteMemory[ioReg[IOREG_BGPI] & 0x3F];
+			case IOREG_OBPD:
+				return spritePaletteMemory[ioReg[IOREG_OBPI] & 0x3F];
+				
+			case IOREG_NR52:
+				return (ioReg[IOREG_NR52] & (1 << 7)) | GetRegisterNR52() | 0x70;
+				
+			default:
+				return (ioReg[reg] & ioRegReadAnd[reg]) | ioRegReadOr[reg];
+			}
 		}
+		else if (address == 0xFFFF)
+		{
+			return cpu.intEnableReg;
+		}
+		else if (uint8_t* ptr = ResolveAddress(address))
+		{
+			return *ptr;
+		}
+		return 0;
 	}
 	
 	static int dmaMin = -1;
@@ -240,6 +275,9 @@ namespace mem
 	
 	void Write(uint16_t address, uint8_t val)
 	{
+		if (!(ioReg[IOREG_NR52] & (1 << 7)) && (address >= (0xFF00 | IOREG_NR10)) && (address < (0xFF00 | IOREG_NR52)))
+			return;
+		
 		switch (address)
 		{
 		case 0x0000 ... 0x1FFF:
@@ -353,29 +391,65 @@ namespace mem
 		DEF_WRITE_GPU_REGISTER(IOREG_OBP0, obp0)
 		DEF_WRITE_GPU_REGISTER(IOREG_OBP1, obp1)
 		
+		case 0xFF00 | IOREG_NR11:
+			ioReg[IOREG_NR11] = val;
+			SetAudioChannelLen(1, val & 0x1F);
+			break;
+		case 0xFF00 | IOREG_NR12:
+			ioReg[IOREG_NR12] = val;
+			SetAudioVolume(1, val >> 4);
+			break;
+		case 0xFF00 | IOREG_NR13:
+			ioReg[IOREG_NR13] = val;
+			SetAudioFrequency(1, ioReg[IOREG_NR13] | (uint32_t)(ioReg[IOREG_NR14] & 7) << 8);
+			break;
 		case 0xFF00 | IOREG_NR14:
-		{
 			ioReg[IOREG_NR14] = val;
+			SetAudioFrequency(1, ioReg[IOREG_NR13] | (uint32_t)(ioReg[IOREG_NR14] & 7) << 8);
 			if (val & 1 << 7)
 				ResetAudioChannel(1);
 			break;
-		}
 		
+		case 0xFF00 | IOREG_NR21:
+			ioReg[IOREG_NR21] = val;
+			SetAudioChannelLen(2, val & 0x1F);
+			break;
+		case 0xFF00 | IOREG_NR22:
+			ioReg[IOREG_NR22] = val;
+			SetAudioVolume(2, val >> 4);
+			break;
+		case 0xFF00 | IOREG_NR23:
+			ioReg[IOREG_NR23] = val;
+			SetAudioFrequency(2, ioReg[IOREG_NR23] | (uint32_t)(ioReg[IOREG_NR24] & 7) << 8);
+			break;
 		case 0xFF00 | IOREG_NR24:
-		{
 			ioReg[IOREG_NR24] = val;
+			SetAudioFrequency(2, ioReg[IOREG_NR23] | (uint32_t)(ioReg[IOREG_NR24] & 7) << 8);
 			if (val & 1 << 7)
 				ResetAudioChannel(2);
 			break;
-		}
 		
+		case 0xFF00 | IOREG_NR31:
+			ioReg[IOREG_NR31] = val;
+			SetAudioChannelLen(3, val);
+			break;
+		case 0xFF00 | IOREG_NR33:
+			ioReg[IOREG_NR33] = val;
+			SetAudioFrequency(3, ioReg[IOREG_NR33] | (uint32_t)(ioReg[IOREG_NR34] & 7) << 8);
+			break;
 		case 0xFF00 | IOREG_NR34:
-		{
 			ioReg[IOREG_NR34] = val;
+			SetAudioFrequency(3, ioReg[IOREG_NR33] | (uint32_t)(ioReg[IOREG_NR34] & 7) << 8);
 			if (val & 1 << 7)
 				ResetAudioChannel(3);
 			break;
-		}
+		case 0xFF00 | IOREG_NR52:
+			ioReg[IOREG_NR52] = val;
+			if (!(val & 1 << 7))
+			{
+				std::fill_n(&ioReg[IOREG_NR10], IOREG_NR52 - IOREG_NR10, 0);
+			}
+			break;
 		
 		case 0xFF00 | IOREG_LY: break;
 			
