@@ -142,7 +142,8 @@ void DebugPane::Draw(SDL_Renderer* renderer)
 	
 	textStream << "  PC: " << std::setw(4) << cpu.pc << "\n";
 	textStream << "  SP: " << std::setw(4) << cpu.sp << "\n";
-	textStream << "PTIM: " << std::dec << std::fixed << std::setprecision(2) << (m_procTimeSum / (double)CLOCK_RATE) << "/" << NSPerClockCycle() << "ns";
+	textStream << "PTIM: " << std::dec << std::fixed << std::setprecision(2) << (m_procTimeSum / (double)CLOCK_RATE) << "/" << NSPerClockCycle() << "ns\n";
+	textStream << " FPS: " << std::dec << m_fps << " Hz";
 	
 	std::string textStr = textStream.str();
 	

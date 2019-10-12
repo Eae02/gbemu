@@ -248,7 +248,11 @@ int main(int argc, char** argv)
 		
 		SDL_RenderPresent(renderer);
 		
-		std::this_thread::sleep_until(startTime + std::chrono::nanoseconds(1000000000LL / 60));
+		auto frameTime = std::chrono::high_resolution_clock::now() - startTime;
+		if (DebugPane::instance)
+		{
+			DebugPane::instance->SetFPS(1000000000LL / frameTime.count());
+		}
 	}
 	
 	cpuThread.join();

@@ -45,7 +45,7 @@ inline static void SetGPUMode(int8_t mode, int8_t ly)
 
 static constexpr int64_t MODE_2_END_NS = 19000;
 static constexpr int64_t MODE_3_END_NS = 40000;
-static constexpr int64_t MODE_0_END_NS = 100000;
+static constexpr int64_t MODE_0_END_NS = 80000;
 static constexpr int64_t MODE_0_MIN_NS = 30000;
 
 struct Sprite
@@ -122,10 +122,10 @@ void gpu::RunOneFrame()
 		}
 	};
 	
+	auto startTime = std::chrono::high_resolution_clock::now();
+	
 	for (int y = 0; y < RES_Y; y++)
 	{
-		auto startTime = std::chrono::high_resolution_clock::now();
-		
 		std::bitset<RES_X> pixelHasBkgSprite;
 		Sprite sprites[10];
 		int numSprites = 0;
@@ -338,12 +338,9 @@ void gpu::RunOneFrame()
 		SetGPUMode(0, y);
 		MaybeTriggerStatInterrupt(1 << 3);
 		
-		auto sleepMode0 = std::max(
-			std::chrono::high_resolution_clock::now() - (startTime + std::chrono::nanoseconds(MODE_0_END_NS)),
-			std::chrono::nanoseconds(MODE_0_MIN_NS)
-		);
-		
-		std::this_thread::sleep_for(sleepMode0);
+		auto endTime = startTime + std::chrono::nanoseconds(MODE_0_END_NS);
+		std::this_thread::sleep_until(endTime);
+		startTime = endTime;
 	}
 	
 	SetGPUMode(1, RES_Y);

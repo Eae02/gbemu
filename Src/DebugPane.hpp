@@ -19,6 +19,11 @@ public:
 		m_procTimeSum = val;
 	}
 	
+	void SetFPS(int fps)
+	{
+		m_fps = fps;
+	}
+	
 	static constexpr uint32_t BORDER_WIDTH = 8;
 	static constexpr uint32_t WIDTH = 512 + BORDER_WIDTH;
 	
@@ -40,6 +45,8 @@ private:
 	TilePalette m_tilePalette = TilePalette::BGP;
 	
 	bool m_spriteOverlayEnabled = false;
+	
+	int m_fps = 0;
 	
 	TTF_Font* m_font16;
 	TTF_Font* m_font12;

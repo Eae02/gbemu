@@ -276,8 +276,8 @@ void AudioCallback(void* userData, uint8_t* stream, int len)
 			sampleR += genR;
 		}
 		
-		stream[s + 0] = SampleToU8(sampleL);
-		stream[s + 1] = SampleToU8(sampleR);
+		reinterpret_cast<int8_t*>(stream)[s + 0] = SampleToU8(sampleL);
+		reinterpret_cast<int8_t*>(stream)[s + 1] = SampleToU8(sampleR);
 	}
 }
 
