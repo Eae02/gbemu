@@ -58,7 +58,7 @@ void CPUThreadTarget()
 	
 	while (!shouldQuit)
 	{
-		int64_t beginProcTime = NanoTime();
+		const int64_t beginProcTime = NanoTime();
 		
 		{
 			std::lock_guard<std::mutex> lock(pendingInterruptsMutex);
@@ -73,8 +73,12 @@ void CPUThreadTarget()
 		
 		mem::UpdateDMA(cycles);
 		
-		for (int i = 0; i < cycles; i += (cpu.doubleSpeed ? 2 : 1))
+		for (int c = 0; c < cycles; c += 4)
+		{
 			UpdateAudio();
+			if (!cpu.doubleSpeed)
+				UpdateAudio();
+		}
 		
 		//Updates the timer
 		uint8_t tac = ioReg[IOREG_TAC];
@@ -99,8 +103,8 @@ void CPUThreadTarget()
 		}
 		
 		targetTime += NSPerClockCycle() * cycles;
-		procTimeSum += NanoTime() - beginProcTime;
 		procTimeSumElapsedCycles += cycles;
+		procTimeSum += NanoTime() - beginProcTime;
 		if (procTimeSumElapsedCycles >= CLOCK_RATE && DebugPane::instance)
 		{
 			DebugPane::instance->SetProcTimeSum(procTimeSum);

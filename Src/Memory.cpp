@@ -37,9 +37,6 @@ namespace mem
 	uint8_t backPaletteMemory[64];
 	uint8_t spritePaletteMemory[64];
 	
-	static uint8_t ioRegReadAnd[128];
-	static uint8_t ioRegReadOr[128];
-	
 	static uint8_t hram[127];
 	
 	enum class BankMode
@@ -139,50 +136,22 @@ namespace mem
 		vramBankStart = vram[0];
 		wramBankStart = wram + 4 * 1024;
 		
-		std::fill_n(ioRegReadAnd, std::size(ioReg), 0xFF);
-		std::fill_n(ioRegReadOr, std::size(ioReg), 0);
-		
-		ioRegReadOr[IOREG_NR10] = 0x80;
-		ioRegReadOr[IOREG_NR11] = 0x3F;
-		ioRegReadOr[IOREG_NR13] = 0xFF;
-		ioRegReadOr[IOREG_NR14] = 0xBF;
-		ioRegReadOr[0x15]       = 0xFF;
-		ioRegReadOr[IOREG_NR21] = 0x3F;
-		ioRegReadOr[IOREG_NR23] = 0xFF;
-		ioRegReadOr[IOREG_NR24] = 0xBF;
-		ioRegReadOr[IOREG_NR30] = 0x7F;
-		ioRegReadOr[IOREG_NR31] = 0xFF;
-		ioRegReadOr[IOREG_NR32] = 0x9F;
-		ioRegReadOr[IOREG_NR33] = 0xFF;
-		ioRegReadOr[IOREG_NR34] = 0xBF;
-		ioRegReadOr[0x1F]       = 0xFF;
-		ioRegReadOr[IOREG_NR41] = 0xFF;
-		ioRegReadOr[IOREG_NR44] = 0xBF;
-		ioRegReadOr[IOREG_NR52] = 0x70;
-		for (int i = IOREG_NR52 + 1; i < 0x30; i++)
-			ioRegReadOr[i] = 0xFF;
-		//.byte $80,$3F,$00,$FF,$BF ; NR10-NR15
-		//.byte $FF,$3F,$00,$FF,$BF ; NR20-NR25
-		//.byte $7F,$FF,$9F,$FF,$BF ; NR30-NR35
-		//.byte $FF,$FF,$00,$00,$BF ; NR40-NR45
-		//.byte $00,$00,$70         ; NR50-NR52
-		
 		memset(ioReg, 0, sizeof(ioReg));
-		ioReg[IOREG_NR10] = 0x80;
-		ioReg[IOREG_NR11] = 0xBF;
-		ioReg[IOREG_NR12] = 0xF3;
-		ioReg[IOREG_NR14] = 0xBF;
-		ioReg[IOREG_NR21] = 0x3F;
-		ioReg[IOREG_NR24] = 0xBF;
-		ioReg[IOREG_NR30] = 0x7F;
-		ioReg[IOREG_NR31] = 0xFF;
-		ioReg[IOREG_NR32] = 0x9F;
-		ioReg[IOREG_NR33] = 0xBF;
-		ioReg[IOREG_NR41] = 0xFF;
-		ioReg[IOREG_NR44] = 0xBF;
-		ioReg[IOREG_NR50] = 0x77;
-		ioReg[IOREG_NR51] = 0xF3;
-		ioReg[IOREG_NR52] = 0xF1;
+		ioReg[IOREG_NR10] = audioReg.NR10;
+		ioReg[IOREG_NR11] = audioReg.NR11;
+		ioReg[IOREG_NR12] = audioReg.NR12;
+		ioReg[IOREG_NR14] = audioReg.NR14;
+		ioReg[IOREG_NR21] = audioReg.NR21;
+		ioReg[IOREG_NR24] = audioReg.NR24;
+		ioReg[IOREG_NR30] = audioReg.NR30;
+		ioReg[IOREG_NR31] = audioReg.NR31;
+		ioReg[IOREG_NR32] = audioReg.NR32;
+		ioReg[IOREG_NR33] = audioReg.NR33;
+		ioReg[IOREG_NR41] = audioReg.NR41;
+		ioReg[IOREG_NR44] = audioReg.NR44;
+		ioReg[IOREG_NR50] = audioReg.NR50;
+		ioReg[IOREG_NR51] = audioReg.NR51;
+		ioReg[IOREG_NR52] = audioReg.NR52;
 		ioReg[IOREG_LCDC] = 0x91;
 		ioReg[IOREG_BGP]  = 0xFC;
 		
@@ -252,11 +221,28 @@ namespace mem
 			case IOREG_OBPD:
 				return spritePaletteMemory[ioReg[IOREG_OBPI] & 0x3F];
 				
-			case IOREG_NR52:
-				return (ioReg[IOREG_NR52] & (1 << 7)) | GetRegisterNR52() | 0x70;
+			case 0x30 ... 0x3F:
+				return audioReg.waveMem[reg - 0x30];
+				
+			case IOREG_NR10: return audioReg.NR10 | 0x80;
+			case IOREG_NR11: return audioReg.NR11 | 0x3F;
+			case IOREG_NR12: return audioReg.NR12;
+			case IOREG_NR14: return audioReg.NR14 | 0xBF;
+			case IOREG_NR21: return audioReg.NR21 | 0x3F;
+			case IOREG_NR22: return audioReg.NR22;
+			case IOREG_NR24: return audioReg.NR24 | 0xBF;
+			case IOREG_NR30: return audioReg.NR30 | 0x7F;
+			case IOREG_NR32: return audioReg.NR32 | 0x9F;
+			case IOREG_NR34: return audioReg.NR34 | 0xBF;
+			case IOREG_NR42: return audioReg.NR42;
+			case IOREG_NR43: return audioReg.NR43;
+			case IOREG_NR44: return audioReg.NR44 | 0xBF;
+			case IOREG_NR50: return audioReg.NR50;
+			case IOREG_NR51: return audioReg.NR51;
+			case IOREG_NR52: return audioReg.NR52 | 0x70;
 				
 			default:
-				return (ioReg[reg] & ioRegReadAnd[reg]) | ioRegReadOr[reg];
+				return ioReg[reg];
 			}
 		}
 		else if (address == 0xFFFF)
@@ -391,65 +377,44 @@ namespace mem
 		DEF_WRITE_GPU_REGISTER(IOREG_OBP0, obp0)
 		DEF_WRITE_GPU_REGISTER(IOREG_OBP1, obp1)
 		
+		case 0xFF00 | IOREG_NR10: audioReg.NR10 = val; break;
 		case 0xFF00 | IOREG_NR11:
-			ioReg[IOREG_NR11] = val;
-			SetAudioChannelLen(1, val & 0x1F);
+			audioReg.NR11 = val;
+			SetAudioChannelLen(1, val & 0x3F);
 			break;
-		case 0xFF00 | IOREG_NR12:
-			ioReg[IOREG_NR12] = val;
-			SetAudioVolume(1, val >> 4);
-			break;
-		case 0xFF00 | IOREG_NR13:
-			ioReg[IOREG_NR13] = val;
-			SetAudioFrequency(1, ioReg[IOREG_NR13] | (uint32_t)(ioReg[IOREG_NR14] & 7) << 8);
-			break;
-		case 0xFF00 | IOREG_NR14:
-			ioReg[IOREG_NR14] = val;
-			SetAudioFrequency(1, ioReg[IOREG_NR13] | (uint32_t)(ioReg[IOREG_NR14] & 7) << 8);
-			if (val & 1 << 7)
-				ResetAudioChannel(1);
-			break;
-		
+		case 0xFF00 | IOREG_NR12: audioReg.NR12 = val; break;
+		case 0xFF00 | IOREG_NR13: audioReg.NR13 = val; break;
+		case 0xFF00 | IOREG_NR14: audioReg.NR14 = val; break;
 		case 0xFF00 | IOREG_NR21:
-			ioReg[IOREG_NR21] = val;
-			SetAudioChannelLen(2, val & 0x1F);
+			audioReg.NR21 = val;
+			SetAudioChannelLen(2, val & 0x3F);
 			break;
-		case 0xFF00 | IOREG_NR22:
-			ioReg[IOREG_NR22] = val;
-			SetAudioVolume(2, val >> 4);
-			break;
-		case 0xFF00 | IOREG_NR23:
-			ioReg[IOREG_NR23] = val;
-			SetAudioFrequency(2, ioReg[IOREG_NR23] | (uint32_t)(ioReg[IOREG_NR24] & 7) << 8);
-			break;
-		case 0xFF00 | IOREG_NR24:
-			ioReg[IOREG_NR24] = val;
-			SetAudioFrequency(2, ioReg[IOREG_NR23] | (uint32_t)(ioReg[IOREG_NR24] & 7) << 8);
-			if (val & 1 << 7)
-				ResetAudioChannel(2);
-			break;
-		
+		case 0xFF00 | IOREG_NR22: audioReg.NR22 = val; break;
+		case 0xFF00 | IOREG_NR23: audioReg.NR23 = val; break;
+		case 0xFF00 | IOREG_NR24: audioReg.NR24 = val; break;
+		case 0xFF00 | IOREG_NR30: audioReg.NR30 = val; break;
 		case 0xFF00 | IOREG_NR31:
-			ioReg[IOREG_NR31] = val;
+			audioReg.NR31 = val;
 			SetAudioChannelLen(3, val);
 			break;
-		case 0xFF00 | IOREG_NR33:
-			ioReg[IOREG_NR33] = val;
-			SetAudioFrequency(3, ioReg[IOREG_NR33] | (uint32_t)(ioReg[IOREG_NR34] & 7) << 8);
+		case 0xFF00 | IOREG_NR32: audioReg.NR32 = val; break;
+		case 0xFF00 | IOREG_NR33: audioReg.NR33 = val; break;
+		case 0xFF00 | IOREG_NR34: audioReg.NR34 = val; break;
+		case 0xFF00 | IOREG_NR41:
+			audioReg.NR41 = val;
+			SetAudioChannelLen(4, val & 0x3F);
 			break;
-		case 0xFF00 | IOREG_NR34:
-			ioReg[IOREG_NR34] = val;
-			SetAudioFrequency(3, ioReg[IOREG_NR33] | (uint32_t)(ioReg[IOREG_NR34] & 7) << 8);
-			if (val & 1 << 7)
-				ResetAudioChannel(3);
-			break;
+		case 0xFF00 | IOREG_NR42: audioReg.NR42 = val; break;
+		case 0xFF00 | IOREG_NR43: audioReg.NR43 = val; break;
+		case 0xFF00 | IOREG_NR44: audioReg.NR44 = val; break;
+		case 0xFF00 | IOREG_NR50: audioReg.NR50 = val; break;
+		case 0xFF00 | IOREG_NR51: audioReg.NR51 = val; break;
+		
 		case 0xFF00 | IOREG_NR52:
-			ioReg[IOREG_NR52] = val;
-			if (!(val & 1 << 7))
-			{
-				std::fill_n(&ioReg[IOREG_NR10], IOREG_NR52 - IOREG_NR10, 0);
-			}
+			audioReg.NR52 = (audioReg.NR52 & 0x7F) | (val & 0x80);
 			break;
+		
+		case 0xFF30 ... 0xFF3F: audioReg.waveMem[address - 0xFF30] = val; break;
 		
 		case 0xFF00 | IOREG_LY: break;
 			

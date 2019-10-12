@@ -224,7 +224,8 @@ int StepCPU()
 	
 	if (std::find(breakpoints.begin(), breakpoints.end(), cpu.pc) != breakpoints.end())
 	{
-		raise(SIGTRAP);
+		std::cout << "@" << std::hex << cpu.pc << std::endl;
+		//raise(SIGTRAP);
 	}
 	
 	uint8_t instruction = ReadPCMem();
