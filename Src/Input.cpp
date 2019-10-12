@@ -52,19 +52,20 @@ void InitInput()
 	std::fill_n(sdlKeyToButton, SDL_NUM_SCANCODES, 0xFF);
 	std::fill_n(sdlCButtonToButton, SDL_CONTROLLER_BUTTON_MAX, 0xFF);
 	
-	sdlKeyToButton[SDL_SCANCODE_LEFT]  = BTN_LEFT;
-	sdlKeyToButton[SDL_SCANCODE_RIGHT] = BTN_RIGHT;
-	sdlKeyToButton[SDL_SCANCODE_UP]    = BTN_UP;
-	sdlKeyToButton[SDL_SCANCODE_DOWN]  = BTN_DOWN;
-	sdlKeyToButton[SDL_SCANCODE_A]     = BTN_LEFT;
-	sdlKeyToButton[SDL_SCANCODE_D]     = BTN_RIGHT;
-	sdlKeyToButton[SDL_SCANCODE_W]     = BTN_UP;
-	sdlKeyToButton[SDL_SCANCODE_S]     = BTN_DOWN;
-	sdlKeyToButton[SDL_SCANCODE_Z]     = BTN_A;
-	sdlKeyToButton[SDL_SCANCODE_X]     = BTN_B;
-	sdlKeyToButton[SDL_SCANCODE_SPACE] = BTN_START;
-	sdlKeyToButton[SDL_SCANCODE_LALT]  = BTN_SELECT;
-	sdlKeyToButton[SDL_SCANCODE_RALT]  = BTN_SELECT;
+	sdlKeyToButton[SDL_SCANCODE_LEFT]   = BTN_LEFT;
+	sdlKeyToButton[SDL_SCANCODE_RIGHT]  = BTN_RIGHT;
+	sdlKeyToButton[SDL_SCANCODE_UP]     = BTN_UP;
+	sdlKeyToButton[SDL_SCANCODE_DOWN]   = BTN_DOWN;
+	sdlKeyToButton[SDL_SCANCODE_A]      = BTN_LEFT;
+	sdlKeyToButton[SDL_SCANCODE_D]      = BTN_RIGHT;
+	sdlKeyToButton[SDL_SCANCODE_W]      = BTN_UP;
+	sdlKeyToButton[SDL_SCANCODE_S]      = BTN_DOWN;
+	sdlKeyToButton[SDL_SCANCODE_Z]      = BTN_A;
+	sdlKeyToButton[SDL_SCANCODE_X]      = BTN_B;
+	sdlKeyToButton[SDL_SCANCODE_SPACE]  = BTN_START;
+	sdlKeyToButton[SDL_SCANCODE_RETURN] = BTN_START;
+	sdlKeyToButton[SDL_SCANCODE_LSHIFT] = BTN_SELECT;
+	sdlKeyToButton[SDL_SCANCODE_RSHIFT] = BTN_SELECT;
 	
 	sdlCButtonToButton[SDL_CONTROLLER_BUTTON_DPAD_LEFT]  = BTN_LEFT;
 	sdlCButtonToButton[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = BTN_RIGHT;

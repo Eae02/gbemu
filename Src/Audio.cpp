@@ -10,9 +10,9 @@
 #include <cstring>
 #include <atomic>
 
-constexpr uint32_t CLOCKS_PER_SAMPLE = 32;
 constexpr uint32_t HALF_CLOCK_RATE = CLOCK_RATE / 2;
-constexpr uint32_t OUTPUT_FREQ = HALF_CLOCK_RATE / CLOCKS_PER_SAMPLE;
+constexpr uint32_t OUTPUT_FREQ = 65536;
+constexpr uint32_t CLOCKS_PER_SAMPLE = HALF_CLOCK_RATE / OUTPUT_FREQ;
 constexpr uint32_t SEQUENCER_FREQ = 512;
 constexpr uint32_t C1_C2_FREQ = 131072;
 constexpr uint32_t C3_FREQ = 65536;
@@ -209,7 +209,7 @@ std::pair<double, double> GenerateClockSample(const AudioRegisterState& reg)
 	}
 	
 	//Channel 4
-	if ((reg.NR52 & 8) && reg.channel4Volume > 0)
+	if ((reg.NR52 & 8) && reg.channel4Volume > 0 && false) //Channel disabled because it doesn't work
 	{
 		const double c4Vol =
 			(1 - 2 * (int)(channel4LFSR & 1)) *

@@ -187,7 +187,7 @@ void gpu::RunOneFrame()
 					//Shifts tall sprites
 					if (tallSprites)
 					{
-						if (spy > y - 8)
+						if ((spy > y - 8) != (bool)(flags & SPF_FLIP_Y))
 							tile &= 0xFE; //Use top tile
 						else
 							tile |= 0x1; //Use bottom tile
