@@ -19,6 +19,11 @@ public:
 		m_procTimeSum = val;
 	}
 	
+	void SetGPUTime(int64_t val)
+	{
+		m_gpuTime = val;
+	}
+	
 	void SetFPS(int fps)
 	{
 		m_fps = fps;
@@ -51,5 +56,6 @@ private:
 	TTF_Font* m_font16;
 	TTF_Font* m_font12;
 	
+	uint64_t m_gpuTime = 0;
 	std::atomic_int64_t m_procTimeSum { 0 };
 };

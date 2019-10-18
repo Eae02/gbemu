@@ -50,8 +50,8 @@ void CPUThreadTarget()
 	uint32_t cyclesSinceTimerInc = 0;
 	bool timerOverflow = false;
 	
-	int64_t startTime = NanoTime();
-	double targetTime = startTime;
+	auto startTime = std::chrono::high_resolution_clock::now();
+	auto targetTime = startTime;
 	
 	int64_t procTimeSum = 0;
 	int procTimeSumElapsedCycles = 0;
@@ -102,7 +102,7 @@ void CPUThreadTarget()
 			}
 		}
 		
-		targetTime += NSPerClockCycle() * cycles;
+		targetTime += std::chrono::nanoseconds((int64_t)(NSPerClockCycle() * cycles));
 		procTimeSumElapsedCycles += cycles;
 		procTimeSum += NanoTime() - beginProcTime;
 		if (procTimeSumElapsedCycles >= CLOCK_RATE && DebugPane::instance)
@@ -112,7 +112,7 @@ void CPUThreadTarget()
 			procTimeSumElapsedCycles -= CLOCK_RATE;
 		}
 		
-		while (NanoTime() < targetTime) { }
+		std::this_thread::sleep_until(targetTime);
 	}
 }
 
@@ -236,17 +236,24 @@ int main(int argc, char** argv)
 			HandleInputEvent(event);
 		}
 		
+		auto gpuBeginTime = std::chrono::high_resolution_clock::now();
+		
 		gpu::RunOneFrame();
 		
 		SDL_Rect copyDst = { 0, 0, RES_X * PIXEL_SCALE, RES_Y * PIXEL_SCALE };
 		SDL_RenderCopy(renderer, gpu::outTexture, nullptr, &copyDst);
 		
+		auto gpuEndTime = std::chrono::high_resolution_clock::now();
+		
 		if (DebugPane::instance)
 		{
+			DebugPane::instance->SetGPUTime((gpuEndTime - gpuBeginTime).count());
 			DebugPane::instance->Draw(renderer);
 		}
 		
 		SDL_RenderPresent(renderer);
+		
+		std::this_thread::sleep_until(startTime + std::chrono::nanoseconds(1000000000LL / 60));
 		
 		auto frameTime = std::chrono::high_resolution_clock::now() - startTime;
 		if (DebugPane::instance)

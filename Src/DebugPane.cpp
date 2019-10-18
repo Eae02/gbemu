@@ -104,7 +104,11 @@ void DebugPane::Draw(SDL_Renderer* renderer)
 		ioReg[IOREG_TMA], ioReg[IOREG_TAC],
 		cpu.intEnableReg, cpu.intEnableMaster,
 		buttonMask, cpu.halted,
-		cgbMode, mbcNames[(int)mem::activeMBC]
+		cgbMode, mbcNames[(int)mem::activeMBC],
+		cpu.reg8[REG_A], cpu.reg8[REG_F],
+		cpu.reg8[REG_B], cpu.reg8[REG_C],
+		cpu.reg8[REG_D], cpu.reg8[REG_E],
+		cpu.reg8[REG_H], cpu.reg8[REG_L]
 	};
 	
 	const char* regNames[] = 
@@ -117,7 +121,11 @@ void DebugPane::Draw(SDL_Renderer* renderer)
 		"TMA", "TAC",
 		"IE", "IME",
 		"BTN", "HLT",
-		"CGB", "MBC"
+		"CGB", "MBC",
+		"RegA", "RegF",
+		"RegB", "RegC",
+		"RegD", "RegE",
+		"RegH", "RegL",
 	};
 	
 	std::ostringstream textStream;
@@ -140,10 +148,11 @@ void DebugPane::Draw(SDL_Renderer* renderer)
 			textStream << "  ";
 	}
 	
-	textStream << "  PC: " << std::setw(4) << cpu.pc << "\n";
-	textStream << "  SP: " << std::setw(4) << cpu.sp << "\n";
-	textStream << "PTIM: " << std::dec << std::fixed << std::setprecision(2) << (m_procTimeSum / (double)CLOCK_RATE) << "/" << NSPerClockCycle() << "ns\n";
-	textStream << " FPS: " << std::dec << m_fps << " Hz";
+	textStream << " PC: " << std::setw(4) << cpu.pc << "\n";
+	textStream << " SP: " << std::setw(4) << cpu.sp << "\n\n";
+	textStream << "CPU: " << std::dec << std::fixed << std::setprecision(2) << (m_procTimeSum / (double)CLOCK_RATE) << "/" << NSPerClockCycle() << " ns\n";
+	textStream << "GPU: " << std::dec << std::fixed << std::setprecision(2) << (m_gpuTime / 1E6) << " ms\n";
+	textStream << "FPS: " << std::dec << m_fps << " Hz";
 	
 	std::string textStr = textStream.str();
 	
